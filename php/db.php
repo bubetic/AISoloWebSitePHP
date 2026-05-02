@@ -20,13 +20,32 @@ function db(): PDO {
 		return $pdo;
 	}
 
-	$dsn = sprintf(
-		'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-		DB_HOST,
-		DB_PORT,
-		DB_DATABASE,
-		DB_CHARSET
-	);
+	$driver = strtolower((string)(getenv('DB_DRIVER') ?: 'mysql'));
+
+	if ($driver === 'sqlsrv') {
+		// Azure SQL / SQL Server
+		// Example host: dmsite.database.windows.net
+		$encrypt = (string)(getenv('DB_ENCRYPT') ?: 'yes'); // yes/no
+		$trustCert = (string)(getenv('DB_TRUST_SERVER_CERTIFICATE') ?: 'no'); // yes/no
+
+		$dsn = sprintf(
+			'sqlsrv:server=tcp:%s,%d;Database=%s;Encrypt=%s;TrustServerCertificate=%s',
+			DB_HOST,
+			DB_PORT,
+			DB_DATABASE,
+			$encrypt,
+			$trustCert
+		);
+	} else {
+		// MySQL / MariaDB
+		$dsn = sprintf(
+			'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+			DB_HOST,
+			DB_PORT,
+			DB_DATABASE,
+			DB_CHARSET
+		);
+	}
 
 	$pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, [
 		PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
